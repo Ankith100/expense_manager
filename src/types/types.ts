@@ -1,13 +1,15 @@
-
 export interface Expense {
     id: string;
     userId: string;
     name: string;
     amount: number;
-    categoryId: string;
-    date : Date
-    notes?: string
-    createdAt: Date
-    updatedAt: Date
+    category: string;
+    date: Date;
+    notes?: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
+
+export type CreateExpenseInput = Omit<Expense, 'category' | 'createdAt' | 'updatedAt'>;
+export type CreateExpenseData = Omit<CreateExpenseInput, 'userId'>;
 
