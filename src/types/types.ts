@@ -3,13 +3,13 @@ export interface Expense {
     userId: string;
     name: string;
     amount: number;
-    category: string;
+    category?: string;
     date: Date;
     notes?: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
-export type CreateExpenseInput = Omit<Expense, 'category' | 'createdAt' | 'updatedAt'>;
+export type CreateExpenseInput = Omit<Expense, 'createdAt' | 'updatedAt'>;
 export type CreateExpenseData = Omit<CreateExpenseInput, 'userId'>;
 

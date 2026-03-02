@@ -22,6 +22,9 @@ const expenseSchema = new Schema({
         type: Date,
         required: true
     },
+    category: {
+        type: String
+    },
     notes: {
         type: String
     }
