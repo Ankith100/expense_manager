@@ -18,6 +18,11 @@ const userSchema = new Schema({
     type: String,
     required: true
   },
+  budgets: {
+    type: Map,
+    of: Number,
+    default: () => new Map()
+  }
 });
 
 

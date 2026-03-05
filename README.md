@@ -138,10 +138,18 @@ Use the `token` value for all expense API requests.
 
 ### 4. Get All Expenses
 
+Results are paginated and sorted by date (latest first).
+
 ```bash
-curl -X GET http://localhost:3000/expenses \
+curl -X GET "http://localhost:3000/expenses?page=1&limit=20" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
+
+**Query Parameters:**
+| Param | Type   | Default | Description              |
+|-------|--------|---------|--------------------------|
+| page  | number | 1       | Page number (1-based)     |
+| limit | number | 20      | Items per page (max 100)  |
 
 **Response (200):**
 ```json
@@ -154,11 +162,19 @@ curl -X GET http://localhost:3000/expenses \
       "name": "Groceries",
       "amount": 50.25,
       "date": "2025-02-26T00:00:00.000Z",
+      "category": "Food",
       "notes": "Weekly shopping",
       "createdAt": "2025-02-26T10:00:00.000Z",
       "updatedAt": "2025-02-26T10:00:00.000Z"
     }
-  ]
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 45,
+    "totalPages": 3,
+    "hasMore": true
+  }
 }
 ```
 
@@ -190,7 +206,26 @@ curl -X GET http://localhost:3000/expenses/EXPENSE_ID \
 
 ---
 
-### 6. Create Expense
+### 6. Get User Categories
+
+Returns all unique categories the user has used in their expenses. Use these to populate a category dropdown when creating/editing expenses.
+
+```bash
+curl -X GET http://localhost:3000/expenses/categories \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Response (200):**
+```json
+{
+  "msg": "User categories",
+  "categories": ["Food", "Groceries", "Transport"]
+}
+```
+
+---
+
+### 7. Create Expense
 
 ```bash
 curl -X POST http://localhost:3000/expenses \
@@ -200,17 +235,19 @@ curl -X POST http://localhost:3000/expenses \
     "name": "Coffee",
     "amount": 5.99,
     "date": "2025-02-26",
+    "category": "Food",
     "notes": "Morning coffee"
   }'
 ```
 
 **Request Body:**
-| Field   | Type   | Required |
-|---------|--------|----------|
-| name    | string | Yes      |
-| amount  | number | Yes      |
-| date    | string | Yes (ISO date) |
-| notes   | string | No       |
+| Field    | Type   | Required |
+|----------|--------|----------|
+| name     | string | Yes      |
+| amount   | number | Yes      |
+| date     | string | Yes (ISO date) |
+| category | string | No       |
+| notes    | string | No       |
 
 **Response (201):**
 ```json
@@ -231,7 +268,7 @@ curl -X POST http://localhost:3000/expenses \
 
 ---
 
-### 7. Update Expense
+### 8. Update Expense
 
 ```bash
 curl -X PUT http://localhost:3000/expenses/EXPENSE_ID \
@@ -270,7 +307,7 @@ curl -X PUT http://localhost:3000/expenses/EXPENSE_ID \
 
 ---
 
-### 8. Delete Expense
+### 9. Delete Expense
 
 ```bash
 curl -X DELETE http://localhost:3000/expenses/EXPENSE_ID \

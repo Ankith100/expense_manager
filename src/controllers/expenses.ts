@@ -6,10 +6,23 @@ const getAllExpenses = async (req: Request, res: Response) => {
     try {
         const userId = req.headers.userId as string;
         if (!userId) return res.status(401).json({ message: 'userId not found' });
-        const expenses = await expenseService.getAllExpenses(userId);
-        return res.status(200).json({ msg: 'This are all the expenses', expenses });
+        const page = req.query.page ? parseInt(String(req.query.page), 10) : undefined;
+        const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : undefined;
+        const result = await expenseService.getAllExpenses(userId, { page, limit });
+        return res.status(200).json({ msg: 'This are all the expenses', ...result });
     } catch (error) {
         return res.status(500).json({ message: 'Failed to fetch expenses' });
+    }
+};
+
+const getCategories = async (req: Request, res: Response) => {
+    try {
+        const userId = req.headers.userId as string;
+        if (!userId) return res.status(401).json({ msg: 'userId not found' });
+        const categories = await expenseService.getUserCategories(userId);
+        return res.status(200).json({ msg: 'User categories', categories });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to fetch categories' });
     }
 };
 
@@ -120,4 +133,4 @@ const deleteExpense = async (req: Request, res: Response) => {
     }
 };
 
-export const expensesController = { getAllExpenses, getExpense, filterByCategoryOrByMonth, dashboard, createExpense, updateExpense, deleteExpense };
+export const expensesController = { getAllExpenses, getExpense, getCategories, filterByCategoryOrByMonth, dashboard, createExpense, updateExpense, deleteExpense };

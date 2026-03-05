@@ -1,4 +1,5 @@
 import { Expense } from '../models/expense';
+import { User } from '../models/users';
 import type { CreateExpenseData, CreateExpenseInput } from '../types/types';
 import { getDatesFromMonth } from '../utils/expense';
 
@@ -7,12 +8,43 @@ import { getDatesFromMonth } from '../utils/expense';
 type FilterOptions = { category?: string; month?: string };
 
 
-const getAllExpenses = async (userId: string) => {
+type PaginationOptions = { page?: number; limit?: number };
+
+const getAllExpenses = async (userId: string, options: PaginationOptions = {}) => {
     try {
-        const expenses = await Expense.find({ userId });
-        return expenses;
+        const page = Math.max(1, options.page ?? 1);
+        const limit = Math.min(20, options.limit ?? 20);
+        const skip = (page - 1) * limit;
+
+        const [expenses, total] = await Promise.all([
+            Expense.find({ userId }).sort({ date: -1 }).skip(skip).limit(limit),
+            Expense.countDocuments({ userId })
+        ]);
+
+        return {
+            expenses,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasMore: page * limit < total
+            }
+        };
     } catch (error) {
         throw new Error('Failed to fetch expenses');
+    }
+};
+
+const getUserCategories = async (userId: string) => {
+    try {
+        const categories = await Expense.distinct('category', {
+            userId,
+            category: { $exists: true, $nin: [null, ''] }
+        });
+        return categories.filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)));
+    } catch (error) {
+        throw new Error('Failed to fetch categories');
     }
 };
 
@@ -87,9 +119,14 @@ const dashboard = async (userId: string, month: string) => {
             date: { $gte: startDate, $lte: endDate }
         };
 
-        const expenses = await Expense.find(query);
+        const [expenses, user] = await Promise.all([
+            Expense.find(query),
+            User.findOne({ id: userId })
+        ]);
 
-        const totalExpense = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+        const totalSpent = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+        const budget = user?.budgets?.get(month) ?? 0;
+        const totalBalance = budget - totalSpent;
 
         const dayWiseExpenses: Record<string, number> = {};
         for (const expense of expenses) {
@@ -101,10 +138,10 @@ const dashboard = async (userId: string, month: string) => {
             .map(([date, amount]) => ({ date, amount }))
             .sort((a, b) => a.date.localeCompare(b.date));
 
-        return { totalExpense, dayWiseExpenses: dayWise };
+        return { budget, totalSpent, totalBalance, dayWiseExpenses: dayWise };
     } catch (error) {
         throw new Error('Failed to fetch dashboard data');
     }
 };
 
-export default { getAllExpenses, getExpense, filterByCategoryOrByMonth, dashboard, createExpense, updateExpense, deleteExpense };
+export default { getAllExpenses, getExpense, getUserCategories, filterByCategoryOrByMonth, dashboard, createExpense, updateExpense, deleteExpense };
